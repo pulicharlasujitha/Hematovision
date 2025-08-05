@@ -1,1 +1,30 @@
 
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+
+# Load MobileNetV2 base (without top)
+base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
+# Freeze base model layers (don't train them)
+for layer in base_model.layers:
+    layer.trainable = False
+
+# Add custom layers on top
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dropout(0.3)(x)
+x = Dense(128, activation='relu')(x)
+output = Dense(4, activation='softmax')(x)  # 4 classes
+
+# Final model
+model = Model(inputs=base_model.input, outputs=output)
+
+# Compile the model
+model.compile(optimizer=Adam(learning_rate=0.0001),
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.summary()
+
